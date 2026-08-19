@@ -39,6 +39,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Use GitHub Actions as Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method PUT "repos/${{ github.repository }}/pages" -f build_type=workflow
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@5e98f10ce206463e411e82ac66ef0f2df79c5499
