@@ -1,9 +1,9 @@
 var WebpackNotifierPlugin = require('webpack-notifier');
 
 module.exports = {
-    // Webpack 4's source-map plugin still relies on MD4 internally and breaks
-    // on modern Node/OpenSSL. Production Webjr does not need source maps, and
-    // omitting them also keeps the browser bundle/deploy lighter.
+    // Webpack 4's source-map plugin and bundled TerserPlugin rely on MD4 in
+    // places that modern Node/OpenSSL disables. Keep Webpack responsible for
+    // bundling only; Webjr can use a modern minifier separately later.
     devtool: false,
     entry: {
         app: './src/entry/app.js'
@@ -12,6 +12,9 @@ module.exports = {
         path: __dirname + '/src/build/bundles',
         filename: '[name].bundle.js',
         hashFunction: 'sha256'
+    },
+    optimization: {
+        minimize: false
     },
     performance: {
         hints: false
