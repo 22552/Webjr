@@ -1,17 +1,37 @@
 import {uuidv4} from './WebSQLMatch';
 
+function matchesClause (obj, clause) {
+    const value = obj ? obj[clause.key] : undefined;
+    switch (clause.op) {
+    case 'eq': return value == clause.value; // eslint-disable-line eqeqeq
+    case 'ne': return value != clause.value; // eslint-disable-line eqeqeq
+    case 'isnull': return value == null; // eslint-disable-line eqeqeq
+    case 'notnull': return value != null; // eslint-disable-line eqeqeq
+    default: return true;
+    }
+}
+
 function matchesWhere (obj, where) {
-    if (!where) return true;
+    if (!where || !where.length) return true;
     if (!obj) return false;
-    return Object.keys(where).every(key => obj[key] == where[key]); // eslint-disable-line eqeqeq
+    return where.every(clause => matchesClause(obj, clause));
+}
+
+function primaryLookupValue (where, primary) {
+    if (!where || !primary) return null;
+    for (let i = 0; i < where.length; i++) {
+        if (where[i].key === primary && where[i].op === 'eq') return where[i].value;
+    }
+    return null;
 }
 
 function getObjects (sqlData, db, fcn) {
     const table = sqlData.TABLE;
     const primary = db.getTablePrimary(table);
     const where = sqlData.WHERE;
-    if (where && primary && where[primary] != null) {
-        db.getItem(table, where[primary], (code, obj) => {
+    const lookup = primaryLookupValue(where, primary);
+    if (lookup != null) {
+        db.getItem(table, lookup, (code, obj) => {
             if (code !== 0) return fcn(code, null);
             fcn(0, obj && matchesWhere(obj, where) ? [obj] : []);
         });
@@ -51,7 +71,7 @@ export function ExecWebForageSQL (sqlData, db, fcn) {
         const obj = sqlData.OBJ || {};
         let key = primary ? obj[primary] : null;
         if (key == null) key = uuidv4();
-        db.setItem(table, key, obj, (code) => fcn(code, code === 0 ? key : null));
+        db.setItem(table, key, obj, code => fcn(code, code === 0 ? key : null));
         return true;
     }
 
