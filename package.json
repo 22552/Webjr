@@ -7,7 +7,7 @@
     "watch": "webpack --mode=development --progress --hide-modules --watch",
     "dev": "webpack --mode=development --progress --hide-modules",
     "build": "webpack --mode=production --progress --hide-modules",
-    "build:web": "npm run build && rm -rf dist && mkdir -p dist && cp -R editions/free/src/. dist/ && rm -f dist/app.bundle.js dist/app.bundle.js.map && cp src/build/bundles/app.bundle.js dist/app.bundle.js"
+    "build:web": "npm run build && rm -rf dist && mkdir -p dist && cp -R editions/free/src/. dist/ && rm -f dist/app.bundle.js dist/app.bundle.js.map && cp src/build/bundles/app.bundle.js dist/app.bundle.js && cp CNAME dist/CNAME"
   },
   "author": "Massachusetts Institute of Technology; Webjr contributors",
   "license": "BSD-3-Clause",
