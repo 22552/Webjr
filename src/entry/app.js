@@ -5,6 +5,7 @@ import MobileUI from '../utils/MobileUI';
 import ExtensionRegistry from '../utils/ExtensionRegistry';
 import VariableRegistry from '../utils/VariableRegistry';
 import NativeExtras from '../utils/NativeExtras';
+import ImageImport from '../utils/ImageImport';
 import EditorLayout from '../utils/EditorLayout';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
@@ -98,6 +99,7 @@ window.onload = () => {
             ExtensionRegistry.bootstrap();
             VariableRegistry.bootstrap();
             NativeExtras.bootstrap();
+            ImageImport.bootstrap();
             EditorLayout.bootstrap();
         }
         Localization.includeLocales(root, () => {
