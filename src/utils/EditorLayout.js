@@ -1,9 +1,12 @@
 import ScriptsPane from '../editor/ui/ScriptsPane';
+import Palette from '../editor/ui/Palette';
+import BlockSpecs from '../editor/blocks/BlockSpecs';
 import {gn, frame, scaleMultiplier} from './lib';
 
 let bootstrapped = false;
 let mounted = false;
 let resizeBound = false;
+let customEventsBound = false;
 let retryTimer = null;
 
 function installStyles () {
@@ -26,6 +29,57 @@ html.webjr-page-editor #frame { background:#fff !important; }
     document.head.appendChild(style);
 }
 
+function glyphImage (text, color) {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">' +
+        '<text x="21" y="27" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="' + color + '">' + text + '</text>' +
+        '</svg>';
+    const img = document.createElement('img');
+    img.width = 42;
+    img.height = 42;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    return img;
+}
+
+function templateFor (spec, opcode) {
+    const defs = BlockSpecs.defs || {};
+    if (opcode.indexOf('webjr_var_') === 0) return defs.wait || null;
+    if (spec[2] === BlockSpecs.blueCmd) return defs.forward || null;
+    if (spec[2] === BlockSpecs.limeCmd) return defs.playsnd || null;
+    if (spec[2] === BlockSpecs.orangeCmd) return defs.wait || null;
+    if (spec[2] === BlockSpecs.yellowCmd) return defs.message || null;
+    return defs.say || null;
+}
+
+function variableGlyph (opcode) {
+    if (/_set$/.test(opcode)) return '=';
+    if (/_change$/.test(opcode)) return '+';
+    if (/_show$/.test(opcode)) return '◉';
+    if (/_hide$/.test(opcode)) return '×';
+    return 'V';
+}
+
+function repairCustomBlockVisuals () {
+    const defs = BlockSpecs.defs;
+    if (!defs) return false;
+    Object.keys(defs).forEach(function (opcode) {
+        if (opcode.indexOf('webjr_') !== 0) return;
+        const spec = defs[opcode];
+        if (!spec) return;
+        const template = templateFor(spec, opcode);
+        if (template) {
+            spec[2] = template[2];
+            spec[5] = template[5];
+            spec[8] = template[8];
+        }
+        if (opcode.indexOf('webjr_var_') === 0) {
+            spec[1] = glyphImage(variableGlyph(opcode), '#ffffff');
+        } else {
+            spec[1] = glyphImage('E', '#ffffff');
+        }
+    });
+    return true;
+}
+
 function resizeScroll (scripts) {
     const scroll = scripts && (scripts.scroll || ScriptsPane.scroll);
     if (!scroll || !scroll.contents) return;
@@ -44,6 +98,8 @@ function layout () {
     const palette = gn('palette');
     const scripts = gn('scripts');
     if (!top || !paletteBox || !selectors || !palette || !scripts || !frame) return false;
+
+    repairCustomBlockVisuals();
 
     const row = Math.round(64 * scaleMultiplier);
     selectors.style.display = 'block';
@@ -70,6 +126,14 @@ function layoutWhenReady (attempt) {
     retryTimer = setTimeout(function () { layoutWhenReady(attempt + 1); }, 32);
 }
 
+function refreshCustomPalette () {
+    repairCustomBlockVisuals();
+    if (Palette.numcat >= 6 && gn('selectors') && gn('palette')) {
+        Palette.selectCategory(Palette.numcat);
+    }
+    layoutWhenReady(0);
+}
+
 function onResize () {
     layoutWhenReady(0);
 }
@@ -83,16 +147,17 @@ export default class EditorLayout {
 
     static mount () {
         if (!bootstrapped) EditorLayout.bootstrap();
-        if (!mounted) {
-            mounted = true;
-            layoutWhenReady(0);
-        } else {
-            layoutWhenReady(0);
-        }
+        mounted = true;
+        layoutWhenReady(0);
         if (!resizeBound) {
             resizeBound = true;
             window.addEventListener('resize', onResize);
             if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+        }
+        if (!customEventsBound) {
+            customEventsBound = true;
+            document.addEventListener('webjr-extension-change', refreshCustomPalette);
+            document.addEventListener('webjr-variable-change', refreshCustomPalette);
         }
     }
 
