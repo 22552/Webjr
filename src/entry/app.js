@@ -7,6 +7,7 @@ import VariableRegistry from '../utils/VariableRegistry';
 import NativeExtras from '../utils/NativeExtras';
 import ImageImport from '../utils/ImageImport';
 import EditorLayout from '../utils/EditorLayout';
+import DragCoordinates from '../utils/DragCoordinates';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
 import MediaLib from '../tablet/MediaLib';
@@ -101,6 +102,7 @@ window.onload = () => {
             NativeExtras.bootstrap();
             ImageImport.bootstrap();
             EditorLayout.bootstrap();
+            DragCoordinates.bootstrap();
         }
         Localization.includeLocales(root, () => {
             MediaLib.loadMediaLib(root, () => {
