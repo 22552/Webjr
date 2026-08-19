@@ -1,13 +1,19 @@
-name: Webjr browser build
+name: Webjr Pages
 
 on:
   push:
-    branches: [web-port]
+    branches: [chromebook-optimize]
   pull_request:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,4 +21,24 @@ jobs:
           node-version: 18
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - run: npm run build:web
+      - name: Upload Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@98ef48e41587a300b82de4cf298aa98b57b2faae
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@5e98f10ce206463e411e82ac66ef0f2df79c5499
