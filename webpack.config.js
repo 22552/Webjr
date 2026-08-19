@@ -1,7 +1,10 @@
 var WebpackNotifierPlugin = require('webpack-notifier');
 
 module.exports = {
-    devtool: 'source-map',
+    // Webpack 4's source-map plugin still relies on MD4 internally and breaks
+    // on modern Node/OpenSSL. Production Webjr does not need source maps, and
+    // omitting them also keeps the browser bundle/deploy lighter.
+    devtool: false,
     entry: {
         app: './src/entry/app.js'
     },
