@@ -1,7 +1,6 @@
 import ScratchAudio from '../utils/ScratchAudio';
-import localforage from 'localforage';
+import WebStore from './WebStore';
 
-const recordings = localforage.createInstance({name: 'Webjr-audio', storeName: 'recordings'});
 const sounds = {};
 
 export default class SoundPlayer {
@@ -10,9 +9,7 @@ export default class SoundPlayer {
     }
 
     static _createSound (name, url) {
-        if (sounds[name] && sounds[name]._webjrObjectURL) {
-            URL.revokeObjectURL(sounds[name]._webjrObjectURL);
-        }
+        if (sounds[name] && sounds[name]._webjrObjectURL) URL.revokeObjectURL(sounds[name]._webjrObjectURL);
         const audio = new Audio(url);
         audio.preload = 'auto';
         if (url.indexOf('blob:') === 0) audio._webjrObjectURL = url;
@@ -21,13 +18,12 @@ export default class SoundPlayer {
     }
 
     static registerBlob (name, blob) {
-        const url = URL.createObjectURL(blob);
-        return SoundPlayer._createSound(name, url);
+        return SoundPlayer._createSound(name, URL.createObjectURL(blob));
     }
 
     static io_registersound (dir, name, fcn) {
         if (dir === 'Documents') {
-            recordings.getItem(name).then(blob => {
+            WebStore.get('recordings', name).then(blob => {
                 const result = blob ? SoundPlayer.registerBlob(name, blob) : 'error';
                 if (typeof fcn === 'function') fcn(result);
             }).catch(() => {
@@ -35,29 +31,25 @@ export default class SoundPlayer {
             });
             return;
         }
-        const url = (dir + name).replace('HTML5/', '');
-        const result = SoundPlayer._createSound(name, url);
+        const result = SoundPlayer._createSound(name, (dir + name).replace('HTML5/', ''));
         if (typeof fcn === 'function') fcn(result);
     }
 
     static io_playsound (name, fcn) {
         const audio = sounds[name];
         if (!audio) {
-            if (typeof fcn === 'function') fcn(name);
-            else ScratchAudio.soundDone(name);
+            if (typeof fcn === 'function') fcn(name); else ScratchAudio.soundDone(name);
             return;
         }
         audio.pause();
         try { audio.currentTime = 0; } catch (e) {} // eslint-disable-line no-empty
         audio.onended = () => {
-            if (typeof fcn === 'function') fcn(name);
-            else ScratchAudio.soundDone(name);
+            if (typeof fcn === 'function') fcn(name); else ScratchAudio.soundDone(name);
         };
         const result = audio.play();
         if (result && typeof result.catch === 'function') {
             result.catch(() => {
-                if (typeof fcn === 'function') fcn(name);
-                else ScratchAudio.soundDone(name);
+                if (typeof fcn === 'function') fcn(name); else ScratchAudio.soundDone(name);
             });
         }
     }
