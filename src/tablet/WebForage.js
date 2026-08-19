@@ -1,4 +1,4 @@
-import localforage from 'localforage';
+import WebStore from './WebStore';
 import WebUtils from './WebUtils';
 import {getSQLData, isEmptyOrSpaces} from './WebSQLMatch';
 import {ExecWebForageSQL} from './WebForageSQL';
@@ -6,7 +6,6 @@ import {ExecWebForageSQL} from './WebForageSQL';
 export default class WebForage {
     constructor (userName) {
         this.userName = userName;
-        this.tables = {};
         this.tableDes = {
             projects: {PRIMARY: 'id', ISGIFT: {DEFAULT: 0}},
             usershapes: {PRIMARY: 'id'},
@@ -14,12 +13,6 @@ export default class WebForage {
             userfiles: {PRIMARY: 'name'},
             test: {PRIMARY: 'id'}
         };
-        Object.keys(this.tableDes).forEach(tableName => {
-            this.tables[tableName] = localforage.createInstance({
-                name: 'Webjr-' + this.userName,
-                storeName: tableName
-            });
-        });
     }
 
     getTablePrimary (tableName) {
@@ -40,10 +33,9 @@ export default class WebForage {
     }
 
     setItem (tableName, key, obj, fcn) {
-        const store = this.tables[tableName];
-        if (!store) return fcn(-1, null);
+        if (!this.tableDes[tableName]) return fcn(-1, null);
         this.initTableDefault(tableName, key, obj);
-        store.setItem(String(key), obj).then(value => fcn(0, value)).catch(err => {
+        WebStore.set(tableName, key, obj).then(value => fcn(0, value)).catch(err => {
             WebUtils.log(err);
             fcn(-2, null);
         });
@@ -58,37 +50,32 @@ export default class WebForage {
     }
 
     getItem (tableName, key, fcn) {
-        const store = this.tables[tableName];
-        if (!store) return fcn(-1, null);
-        store.getItem(String(key)).then(value => fcn(0, value)).catch(err => {
+        if (!this.tableDes[tableName]) return fcn(-1, null);
+        WebStore.get(tableName, key).then(value => fcn(0, value)).catch(err => {
             WebUtils.log(err);
             fcn(-2, null);
         });
     }
 
     deleteItem (tableName, key, fcn) {
-        const store = this.tables[tableName];
-        if (!store) return fcn(-1, null);
-        store.removeItem(String(key)).then(() => fcn(0, null)).catch(err => {
+        if (!this.tableDes[tableName]) return fcn(-1, null);
+        WebStore.remove(tableName, key).then(() => fcn(0, null)).catch(err => {
             WebUtils.log(err);
             fcn(-2, null);
         });
     }
 
     getAllItems (tableName, fcn) {
-        const store = this.tables[tableName];
-        if (!store) return fcn(-1, null);
-        const items = [];
-        store.iterate(value => { items.push(value); }).then(() => fcn(0, items)).catch(err => {
+        if (!this.tableDes[tableName]) return fcn(-1, null);
+        WebStore.all(tableName).then(items => fcn(0, items)).catch(err => {
             WebUtils.log(err);
             fcn(-2, null);
         });
     }
 
     deleteAllItems (tableName, fcn) {
-        const store = this.tables[tableName];
-        if (!store) return fcn(-1, null);
-        store.clear().then(() => fcn(0, null)).catch(err => {
+        if (!this.tableDes[tableName]) return fcn(-1, null);
+        WebStore.clear(tableName).then(() => fcn(0, null)).catch(err => {
             WebUtils.log(err);
             fcn(-2, null);
         });
