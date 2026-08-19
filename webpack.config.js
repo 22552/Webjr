@@ -7,7 +7,8 @@ module.exports = {
     },
     output: {
         path: __dirname + '/src/build/bundles',
-        filename: '[name].bundle.js'
+        filename: '[name].bundle.js',
+        hashFunction: 'sha256'
     },
     performance: {
         hints: false
