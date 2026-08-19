@@ -1,13 +1,20 @@
 var WebpackNotifierPlugin = require('webpack-notifier');
 
 module.exports = {
-    devtool: 'source-map',
+    // Webpack 4's source-map plugin and bundled TerserPlugin rely on MD4 in
+    // places that modern Node/OpenSSL disables. Keep Webpack responsible for
+    // bundling only; Webjr can use a modern minifier separately later.
+    devtool: false,
     entry: {
         app: './src/entry/app.js'
     },
     output: {
         path: __dirname + '/src/build/bundles',
-        filename: '[name].bundle.js'
+        filename: '[name].bundle.js',
+        hashFunction: 'sha256'
+    },
+    optimization: {
+        minimize: false
     },
     performance: {
         hints: false
