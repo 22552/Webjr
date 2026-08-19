@@ -5,6 +5,7 @@ import MobileUI from '../utils/MobileUI';
 import ExtensionRegistry from '../utils/ExtensionRegistry';
 import VariableRegistry from '../utils/VariableRegistry';
 import NativeExtras from '../utils/NativeExtras';
+import EditorLayout from '../utils/EditorLayout';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
 import MediaLib from '../tablet/MediaLib';
@@ -56,6 +57,7 @@ window.onload = () => {
             editorMain();
             MobileUI.init();
             NativeExtras.mountEditor();
+            EditorLayout.mount();
         });
         break;
     case 'gettingStarted':
@@ -96,6 +98,7 @@ window.onload = () => {
             ExtensionRegistry.bootstrap();
             VariableRegistry.bootstrap();
             NativeExtras.bootstrap();
+            EditorLayout.bootstrap();
         }
         Localization.includeLocales(root, () => {
             MediaLib.loadMediaLib(root, () => {
