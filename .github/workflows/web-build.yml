@@ -23,13 +23,11 @@ jobs:
       - run: npm ci
       - run: npm run build:web
       - name: Upload Pages artifact
-        if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@98ef48e41587a300b82de4cf298aa98b57b2faae
         with:
           path: dist
 
   deploy:
-    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     permissions:
