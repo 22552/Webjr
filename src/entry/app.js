@@ -85,6 +85,8 @@ window.onload = () => {
         break;
     }
 
+    MobileUI.initViewport();
+
     loadSettings(root, () => {
         Localization.includeLocales(root, () => {
             MediaLib.loadMediaLib(root, () => {

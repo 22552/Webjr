@@ -3,9 +3,16 @@ export var frame;
 // There are references to it throughout the codebase, should possibly be removed at some point
 export const isTablet = ('ontouchstart' in document.documentElement);
 export const DEGTOR = Math.PI / 180;
-export const WINDOW_INNER_HEIGHT = window.innerHeight;
-export const WINDOW_INNER_WIDTH = window.innerWidth;
-export const scaleMultiplier = WINDOW_INNER_HEIGHT / 768.0;
+export const DESIGN_WIDTH = 1024;
+export const DESIGN_HEIGHT = 768;
+const rawViewportWidth = window.innerWidth;
+const rawViewportHeight = window.innerHeight;
+const fitStage = ['index', 'home', 'editor', 'gettingStarted'].indexOf(window.scratchJrPage) > -1;
+export const scaleMultiplier = fitStage
+    ? Math.min(rawViewportWidth / DESIGN_WIDTH, rawViewportHeight / DESIGN_HEIGHT)
+    : rawViewportHeight / DESIGN_HEIGHT;
+export const WINDOW_INNER_HEIGHT = fitStage ? DESIGN_HEIGHT * scaleMultiplier : rawViewportHeight;
+export const WINDOW_INNER_WIDTH = fitStage ? DESIGN_WIDTH * scaleMultiplier : rawViewportWidth;
 export const fullscreenScaleMultiplier = 136;
 
 /* eslint-disable no-console */
