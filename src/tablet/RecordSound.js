@@ -1,8 +1,7 @@
-import localforage from 'localforage';
 import SoundPlayer from './SoundPlayer';
 import WebUtils from './WebUtils';
+import WebStore from './WebStore';
 
-const recordings = localforage.createInstance({name: 'Webjr-audio', storeName: 'recordings'});
 let recorder = null;
 let stream = null;
 let chunks = [];
@@ -66,7 +65,7 @@ export default class RecordSound {
         }
         recorder.onstop = () => {
             currentBlob = new Blob(chunks, {type: recorder.mimeType || 'audio/webm'});
-            recordings.setItem(recordSoundName, currentBlob).then(() => {
+            WebStore.set('recordings', recordSoundName, currentBlob).then(() => {
                 SoundPlayer.registerBlob(recordSoundName, currentBlob);
                 stopTracks();
                 if (typeof fcn === 'function') fcn('1');
@@ -99,7 +98,7 @@ export default class RecordSound {
 
     static recordsound_recordclose (keep, fcn) {
         const shouldKeep = keep === true || keep === 'YES' || keep === '1';
-        if (!shouldKeep && recordSoundName) recordings.removeItem(recordSoundName);
+        if (!shouldKeep && recordSoundName) WebStore.remove('recordings', recordSoundName);
         stopTracks();
         recorder = null;
         chunks = [];
