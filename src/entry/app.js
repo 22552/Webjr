@@ -2,6 +2,8 @@ import {preprocessAndLoadCss} from '../utils/lib';
 import Localization from '../utils/Localization';
 import InitialOptions from '../utils/InitialOptions';
 import MobileUI from '../utils/MobileUI';
+import ExtensionRegistry from '../utils/ExtensionRegistry';
+import NativeExtras from '../utils/NativeExtras';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
 import MediaLib from '../tablet/MediaLib';
@@ -52,6 +54,7 @@ window.onload = () => {
         entryFunction = () => OS.waitForInterface(() => {
             editorMain();
             MobileUI.init();
+            NativeExtras.mountEditor();
         });
         break;
     case 'gettingStarted':
@@ -88,6 +91,10 @@ window.onload = () => {
     MobileUI.initViewport();
 
     loadSettings(root, () => {
+        if (page === 'editor') {
+            ExtensionRegistry.bootstrap();
+            NativeExtras.bootstrap();
+        }
         Localization.includeLocales(root, () => {
             MediaLib.loadMediaLib(root, () => {
                 entryFunction();
