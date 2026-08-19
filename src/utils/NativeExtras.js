@@ -4,6 +4,7 @@ import Library from '../editor/ui/Library';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
 import ExtensionRegistry from './ExtensionRegistry';
+import VariableRegistry from './VariableRegistry';
 import {gn, newHTML, scaleMultiplier} from './lib';
 
 let bootstrapped = false;
@@ -25,7 +26,10 @@ function installStyles () {
     if (document.getElementById('webjr-native-extras-style')) return;
     const style = document.createElement('style');
     style.id = 'webjr-native-extras-style';
+    const rowHeight = 64 * scaleMultiplier;
     style.textContent = `
+html.webjr, html.webjr body { background:#000 !important; min-height:100dvh !important; }
+html.webjr-page-editor #frame { background:#000 !important; }
 #webjr-menu { display:none !important; }
 #webjr-landscape { background:rgba(70,130,181,.94) !important; border:1px solid rgba(255,255,255,.45); }
 #webjr-sheet-bg { background:rgba(60,68,76,.35) !important; }
@@ -35,6 +39,17 @@ function installStyles () {
 #webjr-fit-info { background:#e7eef2 !important; color:#586872 !important; }
 .webjr-row { border-top:1px solid #d8dee2 !important; }
 #webjr-fullscreen { background:#e8edf0 !important; color:#4c4d4f !important; }
+
+/* Three rows: category types -> blocks -> code workspace. */
+#blockspalette { height:${rowHeight * 2}px !important; min-height:${rowHeight * 2}px !important; overflow:visible !important; }
+#blockspalette .categoryselector { display:block !important; width:100% !important; height:${rowHeight}px !important; overflow:hidden !important; background:#e9ecf0 !important; }
+#blockspalette .categoryselector .catbkg { width:${2048 * scaleMultiplier}px !important; height:${128 * scaleMultiplier}px !important; background:#e9ecf0 !important; }
+#blockspalette .categoryselector .catimage { display:none !important; }
+#blockspalette .palette { display:block !important; width:100% !important; height:${rowHeight}px !important; margin:0 !important; overflow:hidden !important; }
+#blockspalette .papercut { top:${rowHeight * 2}px !important; }
+#blockspalette .controlundo { top:${rowHeight + 7 * scaleMultiplier}px !important; }
+#scripts { background:#fff !important; }
+
 .webjr-importicon { background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='11' width='48' height='42' rx='8' fill='%23fff' stroke='%234682b5' stroke-width='4'/%3E%3Cpath d='M15 44l11-12 8 8 7-7 9 11' fill='none' stroke='%234682b5' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='22' cy='23' r='4' fill='%23f9a737'/%3E%3Cpath d='M44 8v18m-7-7 7 7 7-7' fill='none' stroke='%23f9a737' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important; background-size:100% 100% !important; background-repeat:no-repeat !important; }
 #webjr-extension-modal { position:fixed; inset:0; z-index:35000; display:flex; align-items:center; justify-content:center; padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); box-sizing:border-box; background:rgba(55,68,78,.34); font-family:Roboto,Arial,sans-serif; }
 #webjr-extension-card { width:min(520px,94vw); max-height:min(620px,88vh); overflow:auto; background:#f7f7f2; color:#4c4d4f; border:2px solid #a8bbc6; border-radius:18px; box-shadow:0 10px 30px rgba(30,60,80,.28); }
@@ -51,7 +66,7 @@ function installStyles () {
 .webjr-ext-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
 .webjr-ext-sub { color:#7c878d; font-size:12px; }
 .webjr-ext-empty { padding:18px 8px; text-align:center; color:#7c878d; }
-.webjr-ext-plus { position:absolute; right:0; bottom:1px; z-index:30; display:grid; place-items:center; width:18px; height:18px; border:2px solid #fff; border-radius:50%; background:#f9a737; color:#fff; font:700 15px/14px Arial,sans-serif; box-shadow:0 1px 3px rgba(0,0,0,.24); }
+.webjr-cat-plus { position:absolute; right:0; bottom:1px; z-index:30; display:grid; place-items:center; width:18px; height:18px; border:2px solid #fff; border-radius:50%; background:#f9a737; color:#fff; font:700 15px/14px Arial,sans-serif; box-shadow:0 1px 3px rgba(0,0,0,.24); }
 `;
     document.head.appendChild(style);
 }
@@ -78,9 +93,11 @@ function containThumbnail (img, width, height) {
 
 function saveImportedSprite (img, file) {
     const maxDimension = 360;
+    const targetDisplayMax = 140;
     const shrink = Math.min(1, maxDimension / img.naturalWidth, maxDimension / img.naturalHeight);
     const width = Math.max(1, Math.round(img.naturalWidth * shrink));
     const height = Math.max(1, Math.round(img.naturalHeight * shrink));
+    const spriteScale = Math.min(1, targetDisplayMax / Math.max(width, height));
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
@@ -89,21 +106,21 @@ function saveImportedSprite (img, file) {
     ctx.drawImage(img, 0, 0, width, height);
     const pngData = canvas.toDataURL('image/png');
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
-        '<image width="' + width + '" height="' + height + '" xlink:href="' + pngData + '" href="' + pngData + '"/></svg>';
+        '<image width="' + width + '" height="' + height + '" preserveAspectRatio="xMidYMid meet" xlink:href="' + pngData + '" href="' + pngData + '"/></svg>';
     const name = spriteName(file);
 
     IO.setMedia(svg, 'svg', function (md5) {
-        if (!md5 || md5 === '-1') throw new Error('sprite media save failed');
+        if (!md5 || md5 === '-1') return;
         const thumb = containThumbnail(canvas, 120, 90);
         const thumbBase64 = thumb.toDataURL('image/png').split(',')[1];
         OS.setmedia(thumbBase64, 'png', function (pngmd5) {
             const json = {};
             const keylist = ['scale', 'md5', 'altmd5', 'version', 'width', 'height', 'ext', 'name'];
-            json.values = ['0.5', md5, pngmd5, ScratchJr.version, String(width), String(height), 'svg', name];
+            json.values = [String(spriteScale), md5, pngmd5, ScratchJr.version, String(width), String(height), 'svg', name];
             json.stmt = 'insert into usershapes (' + keylist.toString() + ') values (?,?,?,?,?,?,?,?)';
             OS.stmt(json, function () {
                 if (ScratchJr.stage && ScratchJr.stage.currentPage) {
-                    ScratchJr.stage.currentPage.addSprite(0.5, md5, name);
+                    ScratchJr.stage.currentPage.addSprite(spriteScale, md5, name);
                 }
                 if (gn('libframe') && gn('libframe').className.indexOf('appear') > -1) Library.close(fakeEvent());
             });
@@ -125,8 +142,11 @@ function readSpriteFile (file) {
     reader.onload = function () {
         const img = document.createElement('img');
         img.onload = function () {
+            if (!img.naturalWidth || !img.naturalHeight) {
+                window.alert('この画像は読み込めませんでした。');
+                return;
+            }
             try {
-                if (!img.naturalWidth || !img.naturalHeight) throw new Error('invalid image');
                 saveImportedSprite(img, file);
             } catch (e) {
                 console.error(e); // eslint-disable-line no-console
@@ -159,8 +179,7 @@ function installLibraryImportButton () {
     if (!actions || gn('webjr-import-sprite')) return;
     const buttons = actions.querySelector('.bkgbuttons');
     if (!buttons) return;
-    buttons.classList.add('webjr-import-enabled');
-    buttons.style.width = (40 * scaleMultiplier * 7.68) + 'px';
+    buttons.style.width = (307 * scaleMultiplier) + 'px';
     const button = newHTML('div', 'painticon webjr-importicon', buttons);
     button.id = 'webjr-import-sprite';
     button.title = 'ファイルからキャラクターを追加';
@@ -262,7 +281,7 @@ function openSettings () {
     if (sheet) sheet.classList.add('open');
 }
 
-function openManager (e) {
+function openExtensionManager (e) {
     stopEvent(e);
     const now = Date.now();
     if (now - openGuard < 300) return;
@@ -294,7 +313,7 @@ function openManager (e) {
     body.id = 'webjr-extension-body';
     const note = document.createElement('div');
     note.className = 'webjr-native-callout';
-    note.textContent = 'Webjr用の .js 拡張を追加できます。数字だけでなく文字列入力（text）を持つブロックにも対応しています。選んだJSはWebjr内で実行されます。';
+    note.textContent = 'Webjr用の .js 拡張を追加できます。number / text 引数に対応しています。選んだJSはWebjr内で実行されます。';
     const add = document.createElement('button');
     add.className = 'webjr-native-action';
     add.textContent = '＋ ファイルから拡張機能を追加';
@@ -313,27 +332,42 @@ function openManager (e) {
     refreshManagerList();
 }
 
-function fitExtensionCategory () {
+function addCategoryBadge (index, text, title, handler) {
+    const selectors = gn('selectors');
+    if (!selectors) return false;
+    const selector = selectors.childNodes[index + 1];
+    if (!selector) return false;
+    const id = 'webjr-cat-badge-' + index;
+    if (document.getElementById(id)) return true;
+    const badge = document.createElement('div');
+    badge.id = id;
+    badge.className = 'webjr-cat-plus';
+    badge.textContent = text;
+    badge.title = title;
+    badge.ontouchstart = handler;
+    badge.onmousedown = handler;
+    selector.appendChild(badge);
+    return true;
+}
+
+function fitNativeCategories () {
     const selectors = gn('selectors');
     const palette = gn('palette');
-    if (!selectors || !palette) return;
-    const index = ExtensionRegistry.categoryIndex;
-    const selector = selectors.childNodes[index + 1];
-    if (!selector) return;
+    if (!selectors || !palette) return false;
+    selectors.style.width = '100%';
+    palette.style.width = '100%';
+    addCategoryBadge(ExtensionRegistry.categoryIndex, '+', '拡張機能を追加', openExtensionManager);
+    addCategoryBadge(VariableRegistry.categoryIndex, '+', '変数を作る', function (e) {
+        stopEvent(e);
+        VariableRegistry.openManager();
+    });
+    return true;
+}
 
-    selectors.style.width = (408 * scaleMultiplier) + 'px';
-    if (selectors.childNodes[0]) selectors.childNodes[0].style.width = (816 * scaleMultiplier) + 'px';
-    palette.style.width = (605 * scaleMultiplier) + 'px';
-
-    if (!selector.querySelector('.webjr-ext-plus')) {
-        const badge = document.createElement('div');
-        badge.className = 'webjr-ext-plus';
-        badge.textContent = '+';
-        badge.title = '拡張機能を追加';
-        badge.ontouchstart = openManager;
-        badge.onmousedown = openManager;
-        selector.appendChild(badge);
-    }
+function mountWhenReady (attempt) {
+    if (fitNativeCategories()) return;
+    if (attempt > 120) return;
+    window.setTimeout(function () { mountWhenReady(attempt + 1); }, 32);
 }
 
 export default class NativeExtras {
@@ -347,10 +381,14 @@ export default class NativeExtras {
     static mountEditor () {
         if (mounted) return;
         mounted = true;
-        fitExtensionCategory();
+        mountWhenReady(0);
         document.addEventListener('webjr-extension-change', function () {
-            fitExtensionCategory();
+            fitNativeCategories();
             if (Palette.numcat === ExtensionRegistry.categoryIndex) Palette.selectCategory(ExtensionRegistry.categoryIndex);
+        });
+        document.addEventListener('webjr-variable-change', function () {
+            fitNativeCategories();
+            if (Palette.numcat === VariableRegistry.categoryIndex) Palette.selectCategory(VariableRegistry.categoryIndex);
         });
     }
 }
