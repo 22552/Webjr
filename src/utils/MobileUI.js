@@ -54,7 +54,21 @@ html.webjr-rotating #webjr-rotate-cover { display:grid; }
 #webjr-fullscreen { background:#252b35; color:#fff; }
 #webjr-landscape { position:fixed; top:max(8px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:23000; display:none; max-width:calc(100vw - 24px); padding:8px 11px; border-radius:12px; background:rgba(10,12,16,.94); color:#fff; font:600 13px system-ui; pointer-events:none; }
 html.webjr-mobile.webjr-portrait:not(.webjr-hide-landscape) #webjr-landscape { display:block; }
-html.webjr-large-targets .info, html.webjr-large-targets .undobutton, html.webjr-large-targets .redobutton, html.webjr-large-targets .greenflag, html.webjr-large-targets .stopbutton, html.webjr-large-targets .home, html.webjr-large-targets .paintbutton { min-width:44px !important; min-height:44px !important; }
+/* Never enlarge real layout boxes in portrait: the 4:3 editor is only about 24px per toolbar cell on a 390px-wide phone, so forcing 44px makes adjacent buttons overlap. */
+html.webjr-large-targets:not(.webjr-portrait) .info,
+html.webjr-large-targets:not(.webjr-portrait) .undobutton,
+html.webjr-large-targets:not(.webjr-portrait) .redobutton,
+html.webjr-large-targets:not(.webjr-portrait) .greenflag,
+html.webjr-large-targets:not(.webjr-portrait) .stopbutton,
+html.webjr-large-targets:not(.webjr-portrait) .home,
+html.webjr-large-targets:not(.webjr-portrait) .paintbutton { min-width:44px !important; min-height:44px !important; }
+html.webjr-portrait.webjr-large-targets .info,
+html.webjr-portrait.webjr-large-targets .undobutton,
+html.webjr-portrait.webjr-large-targets .redobutton,
+html.webjr-portrait.webjr-large-targets .greenflag,
+html.webjr-portrait.webjr-large-targets .stopbutton,
+html.webjr-portrait.webjr-large-targets .home,
+html.webjr-portrait.webjr-large-targets .paintbutton { min-width:0 !important; min-height:0 !important; }
 html.webjr-reduce-motion *, html.webjr-reduce-motion *::before, html.webjr-reduce-motion *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
 @media (pointer:fine) and (min-width:900px) { #webjr-menu { width:44px; height:44px; opacity:.58; } #webjr-menu:hover { opacity:1; } }
 `;
@@ -160,7 +174,7 @@ export default class MobileUI {
           <h2>Webjr</h2><div class="sub">ScratchJr compatible · Web optimized</div>
           <div id="webjr-fit-info"></div>
           <label class="webjr-row"><span>JSコンパイラ (JIT)</span><input id="webjr-jit" type="checkbox"></label>
-          <label class="webjr-row"><span>大きいタップ領域</span><input id="webjr-targets" type="checkbox"></label>
+          <label class="webjr-row"><span>大きいタップ領域（横画面）</span><input id="webjr-targets" type="checkbox"></label>
           <label class="webjr-row"><span>アニメーションを減らす</span><input id="webjr-motion" type="checkbox"></label>
           <label class="webjr-row"><span>縦画面で横向きヒント</span><input id="webjr-hint" type="checkbox"></label>
           <div class="webjr-actions"><button id="webjr-fullscreen" type="button">全画面</button><button id="webjr-close" type="button">閉じる</button></div>
