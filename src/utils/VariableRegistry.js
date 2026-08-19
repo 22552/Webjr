@@ -13,8 +13,12 @@ let idCounter = 0;
 
 function safeId (value) {
     const base = String(value || 'variable').toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'variable';
-    idCounter++;
-    return base + '-' + idCounter.toString(36);
+    let candidate;
+    do {
+        idCounter++;
+        candidate = base + '-' + idCounter.toString(36);
+    } while (variables.some(item => item.id === candidate));
+    return candidate;
 }
 
 function escapeXml (value) {
