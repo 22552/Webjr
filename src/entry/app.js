@@ -3,6 +3,7 @@ import Localization from '../utils/Localization';
 import InitialOptions from '../utils/InitialOptions';
 import MobileUI from '../utils/MobileUI';
 import ExtensionRegistry from '../utils/ExtensionRegistry';
+import VariableRegistry from '../utils/VariableRegistry';
 import NativeExtras from '../utils/NativeExtras';
 import OS from '../tablet/OS';
 import IO from '../tablet/IO';
@@ -93,6 +94,7 @@ window.onload = () => {
     loadSettings(root, () => {
         if (page === 'editor') {
             ExtensionRegistry.bootstrap();
+            VariableRegistry.bootstrap();
             NativeExtras.bootstrap();
         }
         Localization.includeLocales(root, () => {
