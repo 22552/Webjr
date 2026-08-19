@@ -57,21 +57,36 @@ class SQLDelete extends SQLMatch {
     }
 }
 
+function parseLiteral (text) {
+    const trimmed = text.trim();
+    if (/^null$/i.test(trimmed)) return null;
+    if ((trimmed[0] === '"' && trimmed[trimmed.length - 1] === '"') || (trimmed[0] === "'" && trimmed[trimmed.length - 1] === "'")) {
+        return trimmed.substring(1, trimmed.length - 1);
+    }
+    if (/^-?[0-9]+(?:\.[0-9]+)?$/.test(trimmed)) return Number(trimmed);
+    return trimmed;
+}
+
 function parseWhere (sql, values, offset) {
     const where = sql.match(/\swhere\s+(.+?)(?:\sorder\s+by\s|$)/i);
     if (!where) return null;
-    const result = {};
+    const clauses = [];
     let valueIndex = offset || 0;
     where[1].split(/\s+AND\s+/i).forEach(part => {
-        let m = part.match(/^\s*([a-zA-Z0-9_]+)\s*=\s*\?\s*$/);
+        let m = part.match(/^\s*([a-zA-Z0-9_]+)\s*(=|!=|<>)\s*\?\s*$/i);
         if (m) {
-            result[m[1]] = values[valueIndex++];
+            clauses.push({key: m[1], op: m[2] === '=' ? 'eq' : 'ne', value: values[valueIndex++]});
             return;
         }
-        m = part.match(/^\s*([a-zA-Z0-9_]+)\s*=\s*['\"]?([^'\"]+)['\"]?\s*$/);
-        if (m) result[m[1]] = m[2];
+        m = part.match(/^\s*([a-zA-Z0-9_]+)\s+IS\s+(NOT\s+)?NULL\s*$/i);
+        if (m) {
+            clauses.push({key: m[1], op: m[2] ? 'notnull' : 'isnull'});
+            return;
+        }
+        m = part.match(/^\s*([a-zA-Z0-9_]+)\s*(=|!=|<>)\s*(.+?)\s*$/i);
+        if (m) clauses.push({key: m[1], op: m[2] === '=' ? 'eq' : 'ne', value: parseLiteral(m[3])});
     });
-    return Object.keys(result).length ? result : null;
+    return clauses.length ? clauses : null;
 }
 
 export function getSQLData (sql, values) {
