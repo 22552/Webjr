@@ -43,8 +43,10 @@ function saveSource (source, file) {
     const sourceHeight = source.height || source.naturalHeight;
     if (!sourceWidth || !sourceHeight) throw new Error('invalid image dimensions');
 
-    const maxDimension = 720;
-    const targetDisplayMax = 140;
+    // Keep imported raster data reasonably sharp while avoiding huge embedded PNGs in SVG media.
+    const maxDimension = 512;
+    // ScratchJr's stage is small; start imported sprites compact and let users enlarge them when needed.
+    const targetDisplayMax = 96;
     const shrink = Math.min(1, maxDimension / sourceWidth, maxDimension / sourceHeight);
     const width = Math.max(1, Math.round(sourceWidth * shrink));
     const height = Math.max(1, Math.round(sourceHeight * shrink));
