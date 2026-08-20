@@ -45,8 +45,8 @@ function saveSource (source, file) {
 
     // Keep imported raster data reasonably sharp while avoiding huge embedded PNGs in SVG media.
     const maxDimension = 512;
-    // ScratchJr's stage is small; start imported sprites compact and let users enlarge them when needed.
-    const targetDisplayMax = 96;
+    // Keep newly imported sprites compact on the 480x360 stage; users can enlarge them afterwards.
+    const targetDisplayMax = 64;
     const shrink = Math.min(1, maxDimension / sourceWidth, maxDimension / sourceHeight);
     const width = Math.max(1, Math.round(sourceWidth * shrink));
     const height = Math.max(1, Math.round(sourceHeight * shrink));
