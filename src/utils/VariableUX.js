@@ -49,7 +49,10 @@ function installRuntimeResolution () {
     const originalGetArgValue = Block.prototype.getArgValue;
     Block.prototype.getArgValue = function () {
         const raw = originalGetArgValue.call(this);
-        return encodingProject > 0 ? raw : resolveValue(raw);
+        if (encodingProject > 0) return raw;
+        const resolved = resolveValue(raw);
+        if (this.arg && this.arg.argType === 't' && resolved != null) return String(resolved);
+        return resolved;
     };
 
     const originalEncodeStrip = Project.encodeStrip;
@@ -91,7 +94,8 @@ function installArgumentPicker () {
         const focus = ScratchJr.activeFocus;
         if (focus && focus.input) {
             const raw = String(focus.input.textContent || '');
-            if (parseExactReference(raw) && variableByNameOrId(parseExactReference(raw))) {
+            const reference = parseExactReference(raw);
+            if (reference && variableByNameOrId(reference)) {
                 focus.argValue = raw;
                 focus.setValue(raw);
                 return;
