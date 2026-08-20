@@ -4,6 +4,7 @@ import InitialOptions from '../utils/InitialOptions';
 import MobileUI from '../utils/MobileUI';
 import ExtensionRegistry from '../utils/ExtensionRegistry';
 import VariableRegistry from '../utils/VariableRegistry';
+import VariableUX from '../utils/VariableUX';
 import NativeExtras from '../utils/NativeExtras';
 import ImageImport from '../utils/ImageImport';
 import EditorLayout from '../utils/EditorLayout';
@@ -99,6 +100,7 @@ window.onload = () => {
         if (page === 'editor') {
             ExtensionRegistry.bootstrap();
             VariableRegistry.bootstrap();
+            VariableUX.bootstrap();
             NativeExtras.bootstrap();
             ImageImport.bootstrap();
             EditorLayout.bootstrap();
