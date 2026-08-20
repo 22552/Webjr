@@ -97,7 +97,12 @@ function positionStage () {
     }
 }
 
-function onViewportChange () {
+function onViewportResize () {
+    deviceClasses();
+    positionStage();
+}
+
+function onOrientationChange () {
     deviceClasses();
     const now = orientation();
     if (initialOrientation && now !== initialOrientation) {
@@ -144,9 +149,9 @@ export default class MobileUI {
 
         if (!viewportBound) {
             viewportBound = true;
-            window.addEventListener('resize', onViewportChange);
-            window.addEventListener('orientationchange', onViewportChange);
-            if (window.visualViewport) window.visualViewport.addEventListener('resize', onViewportChange);
+            window.addEventListener('resize', onViewportResize);
+            window.addEventListener('orientationchange', onOrientationChange);
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', onViewportResize);
         }
     }
 
